@@ -8,6 +8,10 @@ db["SLA"] <- db["Aire_feuilles_cm2"]/db["Masse_feuilles_g"]
 
 db["I_foliaire"] <- db["Nb_feuilles_rameau"]/db["volume_cm3"]
 
+db["I_foliaire_log"] <- log(db["I_foliaire"])
+db["Masse_feuilles_log"] <- log(db["Masse_feuilles_g"])
+db["SLA_log"] <- log(db["SLA"])
+
 
 db <- as.data.frame(unclass(db),                     # Convert all columns to factor
                     stringsAsFactors = TRUE)
@@ -48,14 +52,24 @@ plot(donnee.sp$SLA~donnee.sp$Groupe_fonctionnel)
 #Scatterplot pour voir les correlations entre les variables, on peut jouer avec les differentes variables
 
 library(car)
-scatterplotMatrix(~Tolerance + Masse_feuilles_g*abs(Exposition_num) + Nb_feuilles_rameau + abs(Exposition_num) + SLA + I_foliaire +Masse_feuilles_g, data=db)        
+scatterplotMatrix(~Tolerance + Masse_feuilles_log + Nb_feuilles_rameau + 
+                    Exposition_num + SLA_log + I_foliaire_log, data=db)        
 
 #tests de corrélations
 
-#test le plus significatif à date, avec l'interaction de l'exposition et de la masse des feuilles
+#test le plus significatif à date, avec l'addition du SLA et de la masse des feuilles
 
-summary(lm(I_foliaire~ Masse_feuilles_g*abs(Exposition_num), data=db))
+fit1 <- lm(I_foliaire_log ~ Masse_feuilles_log+SLA_log, data=db)
+summary(fit1)
+
+require(ggplot2)
+require(ggiraph)
+require(ggiraphExtra)
+require(plyr)
+ggplot(db,aes(y=I_foliaire_log,x=Masse_feuilles_log,color=SLA_log))+geom_point()+stat_smooth(method="lm",se=FALSE)
+ggPredict(fit1,interactive=TRUE)
 
 #autres tests
 
-summary(lm(abs(Exposition_num)~ Tolerance, data=db))
+summary(lm(Exposition_num~ SLA, data=db))
+
